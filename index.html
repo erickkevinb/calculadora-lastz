@@ -208,26 +208,27 @@ document.getElementById('manual-input').addEventListener('input', render);
 
 async function fetchRate() {
   document.getElementById('rate-display').innerHTML = '<span class="loading">Buscando câmbio...</span>';
-  try {
-    const r = await fetch('https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/idr.json');
-    const d = await r.json();
-    if (!d.idr?.brl) throw new Error();
-    autoRate = d.idr.brl;
-    rateDate = d.date || 'hoje';
-    showRate();
-  } catch {
+  const today = new Date().toISOString().slice(0,10);
+  const apis = [
+    () => fetch(`https://open.er-api.com/v6/latest/IDR`)
+          .then(r => r.json()).then(d => { if (!d.rates?.BRL) throw 0; return { rate: d.rates.BRL, date: d.time_last_update_utc?.slice(0,10) || today }; }),
+    () => fetch(`https://latest.currency-api.pages.dev/v1/currencies/idr.json`)
+          .then(r => r.json()).then(d => { if (!d.idr?.brl) throw 0; return { rate: d.idr.brl, date: d.date }; }),
+    () => fetch(`https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${today}/v1/currencies/idr.json`)
+          .then(r => r.json()).then(d => { if (!d.idr?.brl) throw 0; return { rate: d.idr.brl, date: d.date }; }),
+  ];
+  for (const api of apis) {
     try {
-      const r2 = await fetch('https://latest.currency-api.pages.dev/v1/currencies/idr.json');
-      const d2 = await r2.json();
-      if (!d2.idr?.brl) throw new Error();
-      autoRate = d2.idr.brl;
-      rateDate = d2.date || 'hoje';
+      const { rate, date } = await api();
+      autoRate = rate;
+      rateDate = date || 'hoje';
       showRate();
-    } catch {
-      document.getElementById('rate-display').innerHTML =
-        '<div class="error-msg">Não foi possível buscar o câmbio. Use o campo manual abaixo.</div>';
-    }
+      render();
+      return;
+    } catch {}
   }
+  document.getElementById('rate-display').innerHTML =
+    '<div class="error-msg">Não foi possível buscar o câmbio. Use o campo manual abaixo.</div>';
   render();
 }
 

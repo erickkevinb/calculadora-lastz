@@ -238,7 +238,7 @@ function showRate() {
       <span class="live-dot">● Ao vivo</span>
       <span class="rate-value">R$ ${autoRate.toFixed(6)}</span>
     </div>
-    <div class="rate-date">Atualizado em: ${rateDate}</div>
+    <div class="rate-date">Atualizado em: ${rateDate.split('-').reverse().join('/')}</div>
   `;
 }
 
